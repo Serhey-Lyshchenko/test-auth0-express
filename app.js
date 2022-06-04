@@ -1,6 +1,9 @@
 const { auth, requiresAuth } = require('express-openid-connect');
 const express = require('express');
 const bodyParser = require('body-parser');
+const dotenv = require("dotenv");
+dotenv.config();
+
 const { organizationsRouter } = require("./organizations/organizations.router");
 const { errorHandler } = require("./middleware/error.middleware");
 const { notFoundHandler } = require("./middleware/not-found.middleware");
@@ -12,10 +15,10 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 const config = {
   authRequired: false,
   auth0Logout: true,
-  baseURL: 'http://localhost:5000',
-  clientID: 'M1D6YKlfNY0r4BeXKVulA1uNQJFHFuSF',
-  issuerBaseURL: 'https://some-tenant-name.us.auth0.com',
-  secret: 'ccc2dec2548c5052cc7adb7df118e1c4aff85224f3de5daf8d9781e964e6493a',
+  baseURL: process.env.BASE_URL,
+  clientID: process.env.CLIENT_ID,
+  issuerBaseURL: process.env.ISSUER_BASE_URL,
+  secret: process.env.CLIENT_SECRET,
 };
 
 app.use(auth(config));
@@ -53,19 +56,23 @@ app.use('/status',(req, res) => {
     status: 'ok'
   });
 })
-// app.use(errorHandler);
-// app.use(notFoundHandler);
+
 const apiRouter = express.Router();
 app.use("/api", apiRouter);
 apiRouter.use("/organizations", organizationsRouter);
 
 // req.isAuthenticated is provided from the auth router
 app.get('/', (req, res) => {
+  let accessToken = req.oidc.accessToken;
+  console.log(accessToken.isExpired())
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out')
 });
 
 app.get('/profile', requiresAuth(), (req, res) => {
   res.send(JSON.stringify(req.oidc.user));
 });
+
+app.use(errorHandler);
+app.use(notFoundHandler);
 
 module.exports = app;
