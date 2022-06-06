@@ -63,8 +63,6 @@ apiRouter.use("/organizations", organizationsRouter);
 
 // req.isAuthenticated is provided from the auth router
 app.get('/', (req, res) => {
-  let accessToken = req.oidc.accessToken;
-  console.log(accessToken.isExpired())
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out')
 });
 
